@@ -1,9 +1,9 @@
 package ui;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.File;
+import javax.swing.*;
 
 public class ChatPanel extends JPanel {
     private JTextArea chatArea;
@@ -63,6 +63,24 @@ public class ChatPanel extends JPanel {
         });
 
         appendMessage("System", "Đã thiết lập chat với " + peerName);
+        
+        // Mặc định vô hiệu hóa Broadcast/Multicast cho đến khi khởi động
+        if (peerName.equals("BROADCAST") || peerName.equals("MULTICAST")) {
+            setControlsEnabled(false);
+        }
+    }
+    
+    // Phương thức kiểm soát trạng thái
+    public void setControlsEnabled(boolean enabled) {
+        inputField.setEnabled(enabled);
+        sendButton.setEnabled(enabled);
+        
+        // Vô hiệu hóa gửi file cho Broadcast/Multicast vì không hỗ trợ
+        if (!peerName.equals("BROADCAST") && !peerName.equals("MULTICAST")) {
+            sendFileButton.setEnabled(enabled);
+        } else {
+            sendFileButton.setEnabled(false);
+        }
     }
 
     public void appendMessage(String sender, String message) {

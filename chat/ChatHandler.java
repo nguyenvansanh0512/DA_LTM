@@ -1,11 +1,10 @@
 package chat;
 
-import ui.ChatPanel;
-import ui.ChatWindow;
-
-import javax.swing.*;
 import java.io.*;
 import java.net.Socket;
+import javax.swing.*;
+import ui.ChatPanel;
+import ui.ChatWindow;
 
 public class ChatHandler extends Thread {
     private Socket socket;
@@ -39,7 +38,8 @@ public class ChatHandler extends Thread {
 
     public boolean sendMessage(String message) {
         try {
-            dataOut.writeUTF("TEXT:" + message);
+            // Vẫn cần tiền tố TEXT: để phân biệt với FILE
+            dataOut.writeUTF("TEXT:" + message); 
             dataOut.flush();
             return true;
         } catch (IOException e) {
@@ -90,6 +90,7 @@ public class ChatHandler extends Thread {
     }
 
     private void handleText(String message) {
+        // HIỂN THỊ: [Peer IP]: Message
         chatPanel.appendMessage(peerAddress, message);
     }
 
