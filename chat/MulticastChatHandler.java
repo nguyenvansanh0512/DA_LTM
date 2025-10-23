@@ -11,6 +11,7 @@ public class MulticastChatHandler extends Thread {
     private final int port;
     private final ChatWindow chatWindow;
     private final ChatPanel multicastPanel; 
+    private String localHostAddress = ""; 
 
     public MulticastChatHandler(ChatWindow chatWindow, ChatPanel multicastPanel, String groupAddress, int port) throws IOException {
         this.chatWindow = chatWindow;
@@ -21,34 +22,43 @@ public class MulticastChatHandler extends Thread {
         this.socket = new MulticastSocket(port); 
         this.socket.joinGroup(group); 
         this.socket.setLoopbackMode(false);
+        
+        // LẤY ĐỊA CHỈ IP CỤC BỘ ĐỂ LỌC TIN NHẮN LOOPBACK
+        try {
+            localHostAddress = InetAddress.getLocalHost().getHostAddress(); 
+        } catch (UnknownHostException e) {
+            chatWindow.appendSystemMessage("Cảnh báo: Không thể lấy IP cục bộ để lọc tin nhắn loopback.");
+        }
+        
         chatWindow.appendSystemMessage("Đã tham gia nhóm Multicast: " + groupAddress + ":" + port);
     }
 
     @Override
     public void run() {
-        byte[] buf = new byte[1024];
-        while (!socket.isClosed()) {
-            try {
-                DatagramPacket packet = new DatagramPacket(buf, buf.length);
-                socket.receive(packet); 
+       byte[] buf = new byte[1024];
+    while (!socket.isClosed()) {
+        try {
+            DatagramPacket packet = new DatagramPacket(buf, buf.length);
+            socket.receive(packet); 
 
-                String received = new String(packet.getData(), 0, packet.getLength());
-                String senderAddress = packet.getAddress().getHostAddress();
-                
-                // Tin nhắn trên đường truyền là "Tên:Nội dung"
-                String[] parts = received.split(":", 2);
-                String message = parts.length > 1 ? parts[1] : received;
+            String received = new String(packet.getData(), 0, packet.getLength());
+            String senderAddress = packet.getAddress().getHostAddress();
+            
+            // --- BỎ QUA HOÀN TOÀN LOGIC LỌC LOOPBACK ĐỂ KIỂM TRA ---
+            
+            String[] parts = received.split(":", 2);
+            String message = parts.length > 1 ? parts[1] : received;
 
-                // HIỂN THỊ: [Địa chỉ IP]: Message
-                multicastPanel.appendMessage(senderAddress, message);
+            // HIỂN THỊ: [Địa chỉ IP]: Message
+            multicastPanel.appendMessage(senderAddress, message);
 
-            } catch (IOException e) {
-                if (!socket.isClosed()) {
-                    chatWindow.appendSystemMessage("Lỗi khi nhận Multicast: " + e.getMessage());
-                }
-                break;
+        } catch (IOException e) {
+            if (!socket.isClosed()) {
+                chatWindow.appendSystemMessage("Lỗi khi nhận Multicast: " + e.getMessage());
             }
+            break;
         }
+    }
     }
 
     public boolean sendMulticastMessage(String senderName, String message) {

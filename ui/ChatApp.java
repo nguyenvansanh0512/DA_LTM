@@ -51,21 +51,28 @@ public class ChatApp implements ChatWindow.MulticastActivationListener {
     public void activateMulticast(ChatPanel multicastPanel) {
         if (multicastHandler != null) return; 
         
-        String groupInput = JOptionPane.showInputDialog(chatWindow, 
-                "Nhập IP Multicast và Port (ví dụ: 230.0.0.1:4446):",
-                "Thiết lập Multicast", JOptionPane.QUESTION_MESSAGE);
+        // ĐỊA CHỈ MULTICAST GROUP MẶC ĐỊNH
+        final String defaultGroupAddress = "230.0.0.1";
+        
+        // Hộp thoại chỉ yêu cầu nhập Port
+        String portInput = JOptionPane.showInputDialog(chatWindow, 
+                "Nhập Port cho Multicast (ví dụ: 4446):",
+                "Thiết lập Multicast (Group mặc định: " + defaultGroupAddress + ")", JOptionPane.QUESTION_MESSAGE);
 
-        if (groupInput != null && !groupInput.trim().isEmpty()) {
+        if (portInput != null && !portInput.trim().isEmpty()) {
             try {
-                String[] parts = groupInput.split(":");
-                String groupAddress = parts[0].trim();
-                int groupPort = Integer.parseInt(parts[1].trim());
+                String groupAddress = defaultGroupAddress; // Cố định địa chỉ
+                int groupPort = Integer.parseInt(portInput.trim()); // Chỉ lấy Port từ người dùng
 
                 multicastHandler = new MulticastChatHandler(chatWindow, multicastPanel, groupAddress, groupPort);
                 multicastHandler.start();
                 connectionManager.setMulticastHandler(multicastHandler);
-            } catch (ArrayIndexOutOfBoundsException | NumberFormatException e) {
-                chatWindow.appendSystemMessage("Lỗi định dạng IP/Port Multicast. Vui lòng nhập định dạng: IP:Port");
+                
+                // Kích hoạt điều khiển sau khi khởi tạo thành công
+                multicastPanel.setControlsEnabled(true); 
+                
+            } catch (NumberFormatException e) {
+                chatWindow.appendSystemMessage("Lỗi định dạng Port Multicast. Vui lòng nhập một số nguyên hợp lệ.");
             } catch (IOException e) {
                 chatWindow.appendSystemMessage("LỖI KHỞI TẠO MULTICAST: " + e.getMessage());
             }
@@ -106,6 +113,10 @@ public class ChatApp implements ChatWindow.MulticastActivationListener {
                 broadcastHandler.start();
                 connectionManager.setBroadcastHandler(broadcastHandler);
                 chatWindow.appendSystemMessage("Broadcast đã được khởi động thành công trên cổng " + broadcastPort + ".");
+                
+                // Kích hoạt điều khiển sau khi khởi tạo thành công
+                broadcastPanel.setControlsEnabled(true); 
+                
             } catch (IOException e) {
                 chatWindow.appendSystemMessage("LỖI KHỞI TẠO BROADCAST: " + e.getMessage());
             }
